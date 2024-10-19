@@ -1,12 +1,11 @@
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <ArduinoJson.h>
-#include <vector>
 
 // UUIDs for BLE Service and Characteristics
-#define SERVICE_UUID        "00005678-0000-1000-BEEF-00805F9B34FC"  // Bulletin Board Service UUID
-#define POST_UUID           "00001234-0000-1000-BEEF-00805F9B34FC"     // Post Message Characteristic UUID
-#define READ_UUID           "00005678-0000-1000-BEEF-00805F9B34FC"     // Read Messages Characteristic UUID
+#define SERVICE_UUID        "00000001-0000-1000-BEEF-00805F9B34FC"  // Bulletin Board Service UUID
+#define POST_UUID           "00000002-0000-1000-BEEF-00805F9B34FC"     // Post Message Characteristic UUID
+#define READ_UUID           "00000003-0000-1000-BEEF-00805F9B34FC"     // Read Messages Characteristic UUID
 
 // Struct to represent a message
 struct Message {
@@ -24,6 +23,17 @@ const int maxMessages = 10;      // Limit to prevent excessive memory use
 class MyServerCallbacks : public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer) {
         Serial.println("Client connected.");
+        
+        // Send the stored messages to the client when connected
+        String response = "";
+        for (const auto& msg : messages) {
+            response += "UUID: " + String(msg.uuid) + " Message: " + String(msg.body) + "\n";
+        }
+        // Assuming the characteristic to write messages back is defined; this might vary
+        // Example: Send response back through a characteristic
+        // pCharacteristic->setValue(response.c_str()); // Implement the right characteristic
+
+        Serial.println("Sending messages to client upon connection.");
     }
 
     void onDisconnect(NimBLEServer* pServer) {
@@ -78,32 +88,25 @@ class ReadMessageCallbacks : public NimBLECharacteristicCallbacks {
     }
 };
 
-// // Function to relay messages to nearby devices
-// void relayMessage(const String& uuid, const String& body, int ttl) {
-//     if (ttl <= 0) {
-//         return; // Stop if TTL is 0
-//     }
-
-//     // Check if UUID has been processed
-//     for (const auto& processedUUID : processedUUIDs) {
-//         if (processedUUID == uuid) {
-//             return; // Prevent loops
-//         }
-//     }
+void printStoredMessages() {
+    Serial.println("Stored Messages:");
     
-//     // Store the UUID to avoid loops
-//     processedUUIDs.push_back(uuid);
-
-//     // Prepare message JSON
-//     StaticJsonDocument<1024> doc; // Use StaticJsonDocument for a fixed size
-//     doc["uuid"] = uuid;
-//     doc["message"] = body;
-//     doc["ttl"] = ttl - 1; // Decrement TTL
-
-//     String jsonString;
-//     serializeJson(doc, jsonString);
-//     Serial.println("Relaying message: " + jsonString);
-// }
+    if (messages.empty()) {
+        Serial.println("No messages stored.");
+        return;
+    }
+    
+    for (const auto& msg : messages) {
+        Serial.println("------------------------");
+        Serial.print("UUID: ");
+        Serial.println(msg.uuid);
+        Serial.print("Message: ");
+        Serial.println(msg.body);
+        Serial.print("TTL: ");
+        Serial.println(msg.ttl);
+        Serial.println("------------------------");
+    }
+}
 
 void setup() {
     Serial.begin(115200);
@@ -118,6 +121,18 @@ void setup() {
 
     // Create a BLE service
     NimBLEService* pService = pServer->createService(SERVICE_UUID);
+
+    /*---------------Store Demo Message-----------------------*/
+    Message demoMessage;
+    strncpy(demoMessage.uuid, "0000dede-0000-1000-BEEF-00805F9B34FC", sizeof(demoMessage.uuid));
+    strncpy(demoMessage.body, "Welcome to the Bulletin Board! :P", sizeof(demoMessage.body));
+    demoMessage.ttl = 5;  // Example TTL
+    messages.push_back(demoMessage);  // Add the demo message to the vector
+    Serial.println("Demo message stored.");
+
+    // Print stored messages
+    printStoredMessages();
+    /*--------------------------------------------------------*/
 
     // Create Post Message characteristic
     NimBLECharacteristic* pPostCharacteristic = pService->createCharacteristic(
