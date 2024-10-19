@@ -78,35 +78,32 @@ class ReadMessageCallbacks : public NimBLECharacteristicCallbacks {
     }
 };
 
-// Function to relay messages to nearby devices
-void relayMessage(const String& uuid, const String& body, int ttl) {
-    if (ttl <= 0) {
-        return; // Stop if TTL is 0
-    }
+// // Function to relay messages to nearby devices
+// void relayMessage(const String& uuid, const String& body, int ttl) {
+//     if (ttl <= 0) {
+//         return; // Stop if TTL is 0
+//     }
 
-    // Check if UUID has been processed
-    for (const auto& processedUUID : processedUUIDs) {
-        if (processedUUID == uuid) {
-            return; // Prevent loops
-        }
-    }
+//     // Check if UUID has been processed
+//     for (const auto& processedUUID : processedUUIDs) {
+//         if (processedUUID == uuid) {
+//             return; // Prevent loops
+//         }
+//     }
     
-    // Store the UUID to avoid loops
-    processedUUIDs.push_back(uuid);
+//     // Store the UUID to avoid loops
+//     processedUUIDs.push_back(uuid);
 
-    // Prepare message JSON
-    StaticJsonDocument<1024> doc; // Use StaticJsonDocument for a fixed size
-    doc["uuid"] = uuid;
-    doc["message"] = body;
-    doc["ttl"] = ttl - 1; // Decrement TTL
+//     // Prepare message JSON
+//     StaticJsonDocument<1024> doc; // Use StaticJsonDocument for a fixed size
+//     doc["uuid"] = uuid;
+//     doc["message"] = body;
+//     doc["ttl"] = ttl - 1; // Decrement TTL
 
-    String jsonString;
-    serializeJson(doc, jsonString);
-    Serial.println("Relaying message: " + jsonString);
-
-    // Here you would implement BLE scanning and sending to other devices
-    // This part needs to be implemented based on your Android device handling
-}
+//     String jsonString;
+//     serializeJson(doc, jsonString);
+//     Serial.println("Relaying message: " + jsonString);
+// }
 
 void setup() {
     Serial.begin(115200);
