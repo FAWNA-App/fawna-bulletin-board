@@ -1,24 +1,24 @@
 #include <Arduino.h>
 #include <NimBLEDevice.h>
-#include <ArduinoJson.h>  // Include the Arduino JSON library
-#include <map>
-#include <list>
+#include <ArduinoJson.h>
+#include <vector>
 
 // UUIDs for BLE Service and Characteristics
-#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"   // Bulletin Board Service UUID
-#define POST_UUID           "abcd1234-5678-1234-5678-abcdef123456"   // Post Message Characteristic UUID
-#define READ_UUID           "abcd5678-1234-5678-1234-abcdef123456"   // Read Messages Characteristic UUID
+#define SERVICE_UUID        "00005678-0000-1000-BEEF-00805F9B34FC"  // Bulletin Board Service UUID
+#define POST_UUID           "00001234-0000-1000-BEEF-00805F9B34FC"     // Post Message Characteristic UUID
+#define READ_UUID           "00005678-0000-1000-BEEF-00805F9B34FC"     // Read Messages Characteristic UUID
 
 // Struct to represent a message
 struct Message {
-    String uuid;
-    String body;
-    int ttl;
+    char uuid[37];     // UUID should fit within 36 characters + null terminator
+    char body[128];    // Message body
+    int ttl;           // Time to live
 };
 
 // Global variables
-std::map<String, Message> messages; // Store posted messages
+std::vector<Message> messages;  // Using vector instead of map for more efficient memory usage
 std::list<String> processedUUIDs;   // Store processed UUIDs for message relay
+const int maxMessages = 10;      // Limit to prevent excessive memory use
 
 // BLE Server Callbacks for managing connection events
 class MyServerCallbacks : public NimBLEServerCallbacks {
@@ -40,7 +40,7 @@ class PostMessageCallbacks : public NimBLECharacteristicCallbacks {
         Serial.println(value);
 
         // Parse the incoming JSON message
-        StaticJsonDocument<1024> doc; // Use StaticJsonDocument for a fixed size
+        StaticJsonDocument<256> doc;  // Keep buffer small and static
         DeserializationError error = deserializeJson(doc, value);
 
         if (error) {
@@ -49,14 +49,20 @@ class PostMessageCallbacks : public NimBLECharacteristicCallbacks {
             return;
         }
 
-        String uuid = doc["uuid"];
-        String messageBody = doc["message"];
+        const char* uuid = doc["uuid"];
+        const char* messageBody = doc["message"];
         int ttl = doc["ttl"];
 
         // Store the message if it has a valid TTL
-        if (ttl > 0) {
-            messages[uuid] = {uuid, messageBody, ttl};
+        if (ttl > 0 && messages.size() < maxMessages) {  // Check for size limit
+            Message msg;
+            strncpy(msg.uuid, uuid, sizeof(msg.uuid));
+            strncpy(msg.body, messageBody, sizeof(msg.body));
+            msg.ttl = ttl;
+            messages.push_back(msg);  // Use vector to store messages
             Serial.println("Message stored.");
+        } else {
+            Serial.println("Message not stored: TTL is 0 or message limit reached.");
         }
     }
 };
@@ -64,8 +70,8 @@ class PostMessageCallbacks : public NimBLECharacteristicCallbacks {
 class ReadMessageCallbacks : public NimBLECharacteristicCallbacks {
     void onRead(NimBLECharacteristic* pCharacteristic) {
         String response = "";
-        for (const auto& pair : messages) {
-            response += "UUID: " + pair.second.uuid + " Message: " + pair.second.body + "\n";
+        for (const auto& msg : messages) {
+            response += "UUID: " + String(msg.uuid) + " Message: " + String(msg.body) + "\n";
         }
         pCharacteristic->setValue(response.c_str());
         Serial.println("Sending messages to client.");
