@@ -4,7 +4,7 @@
 
 // UUIDs for BLE Service and Characteristics
 #define SERVICE_UUID        "00000001-0000-1000-BEEF-00805F9B34FC"  // Bulletin Board Service UUID
-#define POST_UUID           "00000002-0000-1000-BEEF-00805F9B34FC"     // Post Message Characteristic UUID
+#define WRITE_UUID           "00000002-0000-1000-BEEF-00805F9B34FC"     // Write Message Characteristic UUID
 #define READ_UUID           "00000003-0000-1000-BEEF-00805F9B34FC"     // Read Messages Characteristic UUID
 
 // Struct to represent a message
@@ -43,7 +43,7 @@ class MyServerCallbacks : public NimBLEServerCallbacks {
 };
 
 // Characteristic callbacks for handling message interactions
-class PostMessageCallbacks : public NimBLECharacteristicCallbacks {
+class WriteMessageCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic) {
         String value = pCharacteristic->getValue().c_str();
         Serial.print("Received message: ");
@@ -124,7 +124,7 @@ void setup() {
 
     /*---------------Store Demo Message-----------------------*/
     Message demoMessage;
-    strncpy(demoMessage.uuid, "0000dede-0000-1000-BEEF-00805F9B34FC", sizeof(demoMessage.uuid));
+    strncpy(demoMessage.uuid, WRITE_UUID, sizeof(demoMessage.uuid));
     strncpy(demoMessage.body, "Welcome to the Bulletin Board! :P", sizeof(demoMessage.body));
     demoMessage.ttl = 5;  // Example TTL
     messages.push_back(demoMessage);  // Add the demo message to the vector
@@ -134,12 +134,12 @@ void setup() {
     printStoredMessages();
     /*--------------------------------------------------------*/
 
-    // Create Post Message characteristic
-    NimBLECharacteristic* pPostCharacteristic = pService->createCharacteristic(
-                                            POST_UUID,
-                                            NIMBLE_PROPERTY::WRITE
+    // Create Write Message characteristic
+    NimBLECharacteristic* pWriteCharacteristic = pService->createCharacteristic(
+                                            WRITE_UUID,
+                                            NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR
                                         );
-    pPostCharacteristic->setCallbacks(new PostMessageCallbacks());
+    pWriteCharacteristic->setCallbacks(new WriteMessageCallbacks());
 
     // Create Read Messages characteristic
     NimBLECharacteristic* pReadCharacteristic = pService->createCharacteristic(
