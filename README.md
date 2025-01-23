@@ -1,9 +1,5 @@
 This is a networking demo made from connecting an ESP32 microcontroller to an Android phone using Bluetooth Low-Energy (BLE) and show the Universal Unique Identifiers (UUIDs) advertised by the the ESP32 to the Android phone using the BLE Simulator app from the F-Droid app store.
 
-# Network Communication
-
-This project uses peer-to-peer networking architecture using TCP.
-
 # Development Environment
 
 * IDE: PlatformIO v3.3.3
