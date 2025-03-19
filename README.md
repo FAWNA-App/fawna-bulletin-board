@@ -14,12 +14,10 @@ This is the code for the electronic bulletin board named FAWNA, which uses an ES
 
 # Useful Websites
 
-{Make a list of websites that you found helpful in this project}
 * [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino)
 * [PlatformIO Official Doc - NimBLE](https://registry.platformio.org/libraries/h2zero/NimBLE-Arduino)
 
 # Future Work
 
-{Make a list of things that you need to fix, improve, and add in the future.}
 * Implement a Bluetooth mesh network with multiple ESP32-powered FAWNA hubs and Android devices
 * The e-bulletin board is currently being hosted on the Arduino devices using the FAWNA app and needs to be switched over to the ESP32-powered FAWNA hub
