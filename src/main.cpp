@@ -137,8 +137,8 @@ void relayMessage(const String& uuid, const String& body, int ttl) {
     serializeJson(doc, jsonString);
     Serial.println("Relaying message: " + jsonString);
 
-    // Here you would implement BLE scanning and sending to other devices
-    // This part needs to be implemented based on your Android device handling
+    // Here I need to implement BLE scanning and sending to other devices
+    // This part needs to be implemented based on the Android device handling
 }
 
 void setup() {
