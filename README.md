@@ -13,7 +13,7 @@ This is the code for the electronic bulletin board named FAWNA, which uses an ES
 * Language: C++ 
 
 # Code Explanation
-* Code Demo on [YouTube](https://youtu.be/mpIm2d6Ruio)
+* Code walkthrough on [YouTube](https://youtu.be/mpIm2d6Ruio)
 
 # Useful Websites
 
