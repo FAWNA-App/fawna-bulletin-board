@@ -12,6 +12,9 @@ This is the code for the electronic bulletin board named FAWNA, which uses an ES
  
 * Language: C++ 
 
+# Code Explanation
+* Code Demo on [YouTube](https://youtu.be/mpIm2d6Ruio)
+
 # Useful Websites
 
 * [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino)
