@@ -7,6 +7,9 @@
 #define WRITE_UUID           "00000002-0000-1000-BEEF-00805F9B34FC"     // Write Message Characteristic UUID
 #define READ_UUID           "00000003-0000-1000-BEEF-00805F9B34FC"     // Read Messages Characteristic UUID
 
+// Serial Communication Baud rate
+int baud_rate = 115200;
+
 // Struct to represent a message
 struct Message {
     char uuid[37];     // UUID should fit within 36 characters + null terminator
@@ -109,7 +112,7 @@ void printStoredMessages() {
 }
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(baud_rate);
     Serial.println("Starting BLE...");
 
     // Initialize BLE Device
