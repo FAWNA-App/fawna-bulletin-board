@@ -1,12 +1,14 @@
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <ArduinoJson.h>
-#include <vector>
 
 // UUIDs for BLE Service and Characteristics
-#define SERVICE_UUID        "00005678-0000-1000-BEEF-00805F9B34FC"  // Bulletin Board Service UUID
-#define POST_UUID           "00001234-0000-1000-BEEF-00805F9B34FC"     // Post Message Characteristic UUID
-#define READ_UUID           "00005678-0000-1000-BEEF-00805F9B34FC"     // Read Messages Characteristic UUID
+#define SERVICE_UUID        "00000001-0000-1000-BEEF-00805F9B34FC"  // Bulletin Board Service UUID
+#define WRITE_UUID           "00000002-0000-1000-BEEF-00805F9B34FC"     // Write Message Characteristic UUID
+#define READ_UUID           "00000003-0000-1000-BEEF-00805F9B34FC"     // Read Messages Characteristic UUID
+
+// Serial Communication Baud rate
+int baud_rate = 115200;
 
 // Struct to represent a message
 struct Message {
@@ -24,6 +26,17 @@ const int maxMessages = 10;      // Limit to prevent excessive memory use
 class MyServerCallbacks : public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer) {
         Serial.println("Client connected.");
+        
+        // Send the stored messages to the client when connected
+        String response = "";
+        for (const auto& msg : messages) {
+            response += "UUID: " + String(msg.uuid) + " Message: " + String(msg.body) + "\n";
+        }
+        // Assuming the characteristic to write messages back is defined; this might vary
+        // Example: Send response back through a characteristic
+        // pCharacteristic->setValue(response.c_str()); // Implement the right characteristic
+
+        Serial.println("Sending messages to client upon connection.");
     }
 
     void onDisconnect(NimBLEServer* pServer) {
@@ -33,7 +46,7 @@ class MyServerCallbacks : public NimBLEServerCallbacks {
 };
 
 // Characteristic callbacks for handling message interactions
-class PostMessageCallbacks : public NimBLECharacteristicCallbacks {
+class WriteMessageCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic) {
         String value = pCharacteristic->getValue().c_str();
         Serial.print("Received message: ");
@@ -78,6 +91,26 @@ class ReadMessageCallbacks : public NimBLECharacteristicCallbacks {
     }
 };
 
+void printStoredMessages() {
+    Serial.println("Stored Messages:");
+    
+    if (messages.empty()) {
+        Serial.println("No messages stored.");
+        return;
+    }
+    
+    for (const auto& msg : messages) {
+        Serial.println("------------------------");
+        Serial.print("UUID: ");
+        Serial.println(msg.uuid);
+        Serial.print("Message: ");
+        Serial.println(msg.body);
+        Serial.print("TTL: ");
+        Serial.println(msg.ttl);
+        Serial.println("------------------------");
+    }
+}
+
 // Function to relay messages to nearby devices
 void relayMessage(const String& uuid, const String& body, int ttl) {
     if (ttl <= 0) {
@@ -109,7 +142,7 @@ void relayMessage(const String& uuid, const String& body, int ttl) {
 }
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(baud_rate);
     Serial.println("Starting BLE...");
 
     // Initialize BLE Device
@@ -122,12 +155,24 @@ void setup() {
     // Create a BLE service
     NimBLEService* pService = pServer->createService(SERVICE_UUID);
 
-    // Create Post Message characteristic
-    NimBLECharacteristic* pPostCharacteristic = pService->createCharacteristic(
-                                            POST_UUID,
-                                            NIMBLE_PROPERTY::WRITE
+    /*---------------Store Demo Message-----------------------*/
+    Message demoMessage;
+    strncpy(demoMessage.uuid, WRITE_UUID, sizeof(demoMessage.uuid));
+    strncpy(demoMessage.body, "Welcome to the Bulletin Board! :P", sizeof(demoMessage.body));
+    demoMessage.ttl = 5;  // Example TTL
+    messages.push_back(demoMessage);  // Add the demo message to the vector
+    Serial.println("Demo message stored.");
+
+    // Print stored messages
+    printStoredMessages();
+    /*--------------------------------------------------------*/
+
+    // Create Write Message characteristic
+    NimBLECharacteristic* pWriteCharacteristic = pService->createCharacteristic(
+                                            WRITE_UUID,
+                                            NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR
                                         );
-    pPostCharacteristic->setCallbacks(new PostMessageCallbacks());
+    pWriteCharacteristic->setCallbacks(new WriteMessageCallbacks());
 
     // Create Read Messages characteristic
     NimBLECharacteristic* pReadCharacteristic = pService->createCharacteristic(
